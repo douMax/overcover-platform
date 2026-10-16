@@ -4,7 +4,7 @@
 
 ---
 
-# Project Specification: VaporGame Hub (Multiplayer Social Game Platform)
+# Project Specification: Overcover (Multiplayer Social Game Platform)
 
 ## 1. Project Overview
 

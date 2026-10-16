@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Sandcastle is a real-time social game platform for mobile web browsers, enabling face-to-face multiplayer games. Current games: "Who is Undercover" (谁是卧底), "Task-based Werewolf" (TaskWolf/任务狼人杀) and "Bluff King" (谁是瞎掰王). Design aesthetic is vaporwave/neon/Arc-style with glassmorphism.
+Overcover is a real-time social game platform for mobile web browsers, enabling face-to-face multiplayer games. Current games: "Who is Undercover" (谁是卧底), "Task-based Werewolf" (TaskWolf/任务狼人杀) and "Bluff King" (谁是瞎掰王). Design aesthetic is vaporwave/neon/Arc-style with glassmorphism.
 
 ## Commands
 
@@ -36,7 +36,7 @@ cd frontend && npm install
 
 ### Key Architectural Patterns
 
-**Strategy pattern for games:** `BaseGame` abstract class in `backend/src/games/base-game.ts` with concrete implementations (`UndercoverGame`, `TaskWolfGame`). Each game handles its own state transitions and player data sanitization.
+**Strategy pattern for games:** `BaseGame` abstract class in `backend/src/games/base-game.ts` with concrete implementations (`UndercoverGame`, `TaskWolfGame`, `ColourHuntGame`, `BluffKingGame`). Each game handles its own state transitions and player data sanitization.
 
 **Full-state push model:** Server broadcasts the entire `RoomState` to all players on every state change. No partial updates or client-side merging. Before broadcasting, backend sanitizes data per-player (e.g., civilians don't see the undercover word).
 
@@ -56,7 +56,7 @@ cd frontend && npm install
 - **TypeScript strict mode** across all workspaces, no `any` types
 - **Event names** must use constants from `shared/events.ts` (e.g., `GameEvents.JOIN_ROOM`)
 - **DTOs** in `shared/dto/` separate frontend-visible data from backend internals (e.g., `socketId` never sent to clients)
-- **All documentation** goes in `docs/` — game rules in `docs/prd-prompt.md`, word pairs in `docs/word-list.md`, Bluff King cards in `docs/bluff-list.md` (parsed at runtime — keep its field format)
+- **All documentation** goes in `docs/` — game rules in `docs/PRD_PROMPT.md`, word pairs in `docs/word-list.md`, Bluff King cards in `docs/bluff-list.md` (parsed at runtime — keep its field format)
 - **Styling:** Dark gradients (`#0F172A` to `#020617`), cream cards (`#FFFDF0`), neon glow via Tailwind shadow utilities, Framer Motion for animations
 - **Mobile-first:** UI optimized for mobile browsers. Hold-to-reveal cards use 1.5s long-press with blur filter. Haptic feedback via `navigator.vibrate()`.
 
