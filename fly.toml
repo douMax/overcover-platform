@@ -1,5 +1,7 @@
-# fly.toml app configuration for Overcover
-# See https://fly.io/docs/reference/configuration/
+# fly.toml app configuration file generated for overcover-platform on 2026-10-16T15:05:32Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
 app = 'overcover-platform'
 primary_region = 'syd'
@@ -14,7 +16,6 @@ primary_region = 'syd'
 [http_service]
   internal_port = 8080
   force_https = true
-  # Rooms live in memory: suspend (not stop) keeps them when the machine idles
   auto_stop_machines = 'suspend'
   auto_start_machines = true
   min_machines_running = 0
@@ -22,17 +23,18 @@ primary_region = 'syd'
 
   [http_service.concurrency]
     type = 'connections'
-    soft_limit = 500
     hard_limit = 1000
+    soft_limit = 500
 
   [[http_service.checks]]
-    grace_period = '10s'
     interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
     method = 'GET'
     path = '/health'
-    timeout = '5s'
 
 [[vm]]
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 256
