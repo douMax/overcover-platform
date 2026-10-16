@@ -1,14 +1,14 @@
 {
-  "name": "overload",
+  "name": "overcover",
   "version": "1.0.0",
   "description": "A lightweight, high-end social game platform",
   "private": true,
   "scripts": {
-    "dev:backend": "pnpm --filter overload-backend dev",
-    "dev:frontend": "pnpm --filter overload-frontend dev",
-    "build:backend": "pnpm --filter overload-backend build",
-    "build:frontend": "pnpm --filter overload-frontend build",
-    "build": "cd backend && ./node_modules/.bin/tsc --build ../shared/tsconfig.json && pnpm --filter overload-frontend build && pnpm --filter overload-backend build",
+    "dev:backend": "pnpm --filter overcover-backend dev",
+    "dev:frontend": "pnpm --filter overcover-frontend dev",
+    "build:backend": "pnpm --filter overcover-backend build",
+    "build:frontend": "pnpm --filter overcover-frontend build",
+    "build": "cd backend && ./node_modules/.bin/tsc --build ../shared/tsconfig.json && pnpm --filter overcover-frontend build && pnpm --filter overcover-backend build",
     "start": "node backend/dist/index.js"
   },
   "keywords": ["game", "social", "multiplayer"],

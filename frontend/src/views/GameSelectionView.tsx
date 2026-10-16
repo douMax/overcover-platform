@@ -71,7 +71,7 @@ export function GameSelectionView() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="text-center mb-10">
         <h1 className="text-6xl font-bold font-display text-on-surface mb-4">
-          <span className="bg-primary-gradient bg-clip-text text-transparent">Overload</span>
+          <span className="bg-primary-gradient bg-clip-text text-transparent">Overcover</span>
         </h1>
         <p className="text-xl text-on-surface-variant">选择游戏或加入房间</p>
       </div>

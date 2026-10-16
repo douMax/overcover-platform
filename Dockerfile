@@ -25,13 +25,17 @@ RUN pnpm run build
 # Copy shared compiled output to shared root so require("../../../shared/events") resolves
 RUN cp -r /app/shared/dist/* /app/shared/
 
+# Self-contained production deps for the backend (pnpm's workspace node_modules are
+# symlinks into /app/node_modules/.pnpm, which the production image doesn't have)
+RUN pnpm --filter overcover-backend deploy --prod --legacy /app/backend-prod
+
 # Production image
 FROM node:20-slim
 
 WORKDIR /app
 
 COPY --from=build /app/backend/dist ./backend/dist
-COPY --from=build /app/backend/node_modules ./backend/node_modules
+COPY --from=build /app/backend-prod/node_modules ./backend/node_modules
 COPY --from=build /app/backend/package.json ./backend/
 COPY --from=build /app/frontend/dist ./frontend/dist
 COPY --from=build /app/shared ./shared

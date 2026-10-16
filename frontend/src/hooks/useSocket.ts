@@ -16,10 +16,10 @@ const voteWarningListeners = new Set<(warning: VoteWarningPayload) => void>();
 
 // Persistence keys
 const STORAGE_KEYS = {
-  PLAYER_ID: "overload_player_id",
-  NICKNAME: "overload_nickname",
-  AVATAR: "overload_avatar",
-  LAST_ROOM_ID: "overload_last_room_id",
+  PLAYER_ID: "overcover_player_id",
+  NICKNAME: "overcover_nickname",
+  AVATAR: "overcover_avatar",
+  LAST_ROOM_ID: "overcover_last_room_id",
 };
 
 function getOrCreatePlayerId(): string {
