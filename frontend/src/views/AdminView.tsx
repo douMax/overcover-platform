@@ -29,6 +29,8 @@ const STATUS_LABELS: Record<string, string> = {
 const GAME_LABELS: Record<string, string> = {
   UNDERCOVER: "谁是卧底",
   TASKWOLF: "任务狼人杀",
+  COLOUR_HUNT: "野餐 Colour Hunt",
+  BLUFF_KING: "谁是瞎掰王",
 };
 
 const PHASE_LABELS: Record<string, string> = {

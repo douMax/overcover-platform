@@ -25,6 +25,15 @@ const GAMES: GameCard[] = [
     glowColor: "rgba(224, 64, 251, 0.3)",
   },
   {
+    id: GameTypeEnum.BLUFF_KING,
+    title: "谁是瞎掰王",
+    subtitle: "一本正经地胡说八道",
+    icon: "mdi:drama-masks",
+    enabled: true,
+    accentColor: "from-secondary to-primary",
+    glowColor: "rgba(0, 229, 255, 0.3)",
+  },
+  {
     id: GameTypeEnum.TASKWOLF,
     title: "任务狼人杀",
     subtitle: "完成任务，找出狼人",

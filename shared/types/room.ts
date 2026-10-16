@@ -1,5 +1,6 @@
 import { Player } from "./player";
 import { RoomStatus, GameTypeEnum } from "./enums";
+import { BluffMode } from "./game-state";
 
 export interface RoomConfig {
   customWordPairs?: Array<{ A: string; B: string }>;
@@ -11,6 +12,8 @@ export interface RoomConfig {
   numWolves?: number;
   taskCategory?: string;
   designatedWolfIds?: string[];  // host picks who is wolf
+  bluffMode?: BluffMode;         // Bluff King: what bluffers get to see
+  bluffRounds?: number;          // Bluff King: number of rounds
 }
 
 export interface Room {

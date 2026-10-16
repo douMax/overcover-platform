@@ -78,7 +78,7 @@ Inspired by Fictionary / Balderdash / 9upper. Card bank: `docs/bluff-list.md`.
    - Honest: full explanation, hold-to-reveal for a **10s total budget**, then locked (stops verbatim reading).
    - Bluffers in `HALF` mode: the first-half text. In `HINTS` mode: 3 hints (1 true + 2 random decoys, shuffled; combos may differ per bluffer). Bluffers do not know which hint is true.
    - Guessers: word only. No one sees others' roles until reveal.
-4. **Flow:** Reveal cards → speakers explain offline in app-generated random order → host opens voting → each Guesser votes for one speaker as the Honest → reveal roles, full explanation and votes → scores → next round.
+4. **Flow:** Reveal cards → speakers explain offline in app-generated random order (host can swap the card via 换一题; roles stay) → host opens voting → each Guesser votes for one speaker as the Honest → reveal roles, full explanation and votes → scores → next round.
 5. **Scoring:**
    - Guesser votes for the Honest: Guesser +1, Honest +1 (per correct vote).
    - Each vote a Bluffer receives: that Bluffer +1. Bluffer with most votes is crowned the round's 瞎掰王.

@@ -6,6 +6,7 @@ import { DesertButton } from "../components/DesertButton";
 import { Avatar } from "../components/Avatar";
 import { PlayerRole } from "@shared/types/player";
 import { UndercoverGameStateDTO, TaskWolfGameStateDTO, ColourHuntGameStateDTO } from "@shared/types/game-state";
+import { BluffKingView } from "./BluffKingView";
 
 // Shared types for both game modes
 interface GameInfo {
@@ -123,6 +124,10 @@ export function GameplayView() {
         <div className="text-on-surface">加载中...</div>
       </div>
     );
+  }
+
+  if (gameState.type === 'BLUFF_KING') {
+    return <BluffKingView gameState={gameState} />;
   }
 
   // Colour Hunt has its own UI

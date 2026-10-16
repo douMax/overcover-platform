@@ -20,8 +20,9 @@ import { BaseGame } from "../games/base-game";
 import { UndercoverGame } from "../games/undercover-game";
 import { TaskWolfGame } from "../games/taskwolf-game";
 import { ColourHuntGame } from "../games/colour-hunt-game";
+import { BluffKingGame, BLUFF_KING_MIN_PLAYERS } from "../games/bluff-king-game";
 
-type GameWithVoteStatus = UndercoverGame | TaskWolfGame;
+type GameWithVoteStatus = UndercoverGame | TaskWolfGame | BluffKingGame;
 import { sanitizePlayer } from "../utils/player-sanitizer";
 
 export class SocketHandlers {
@@ -124,6 +125,15 @@ export class SocketHandlers {
     } else if (payload.gameType === GameTypeEnum.COLOUR_HUNT) {
       game = new ColourHuntGame(room);
       game.onStart(payload.config || {});
+    } else if (payload.gameType === GameTypeEnum.BLUFF_KING) {
+      const hostIsPlaying = payload.config?.hostIsPlaying !== false;
+      const playingCount = room.players.filter(p => p.isHost ? hostIsPlaying : p.isPlaying).length;
+      if (playingCount < BLUFF_KING_MIN_PLAYERS) {
+        socket.emit("error", { message: `至少需要 ${BLUFF_KING_MIN_PLAYERS} 名玩家` });
+        return;
+      }
+      game = new BluffKingGame(room);
+      game.onStart(payload.config || {});
     } else {
       socket.emit("error", { message: "Invalid game type" });
       return;
@@ -161,20 +171,21 @@ export class SocketHandlers {
       return;
     }
 
-    const hostOnlyActions = ["REVEAL_VOTES", "ELIMINATE_PLAYER", "NEXT_ROUND", "SKIP_ELIMINATE", "END_GAME", "RESTART_GAME", "REVEAL_ALL"];
+    const hostOnlyActions = ["REVEAL_VOTES", "ELIMINATE_PLAYER", "NEXT_ROUND", "SKIP_ELIMINATE", "END_GAME", "RESTART_GAME", "REVEAL_ALL", "SKIP_CARD"];
 
     if (hostOnlyActions.includes(payload.action) && !player.isHost) {
       socket.emit("error", { message: "Only host can perform this action" });
       return;
     }
 
-    // For SUBMIT_VOTE, inject the voterId from the authenticated player
+    // Inject the authenticated player as the actor (and voterId for SUBMIT_VOTE)
+    payload.data = { ...payload.data, actorId: player.id };
     if (payload.action === "SUBMIT_VOTE") {
-      payload.data = { ...payload.data, voterId: player.id };
+      payload.data.voterId = player.id;
     }
 
     // For REVEAL_VOTES, check if all players voted and warn if not
-    if (payload.action === "REVEAL_VOTES" && (game instanceof UndercoverGame || game instanceof TaskWolfGame)) {
+    if (payload.action === "REVEAL_VOTES" && (game instanceof UndercoverGame || game instanceof TaskWolfGame || game instanceof BluffKingGame)) {
       const voteStatus = (game as GameWithVoteStatus).getVoteStatus();
       if (voteStatus.notVoted.length > 0) {
         // Send warning to host — they can re-send REVEAL_VOTES with force flag
@@ -368,6 +379,8 @@ export class SocketHandlers {
         game = new TaskWolfGame(room);
       } else if (state.type === "COLOUR_HUNT") {
         game = new ColourHuntGame(room);
+      } else if (state.type === "BLUFF_KING") {
+        game = new BluffKingGame(room);
       } else {
         continue;
       }
