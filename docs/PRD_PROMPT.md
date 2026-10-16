@@ -60,6 +60,30 @@ interface GameEngine {
 3. **Visibility:** Players see their Role (Wolf/Villager). Wolves also see their Secret Task.
 4. **Execution:** Host monitors the game and manually marks players as "Out" when a task is completed or via vote.
 
+### Game 3: Bluff King (谁是瞎掰王)
+
+Inspired by Fictionary / Balderdash / 9upper. Card bank: `docs/bluff-list.md`.
+
+1. **Setup (host config):**
+   - **Hint mode** — `HALF` (前半段) or `HINTS` (三选一). Chosen before the game; host may switch between rounds.
+   - **Rounds** — multi-round game with cumulative scores (default = number of players, so the Honest role rotates through everyone).
+   - **Host plays** — toggle (`host.isPlaying`). If the host is not playing, they act as MC and see the full card.
+   - Minimum 4 playing players.
+2. **Roles (per round):**
+   - Speakers = `min(playerCount - 1, 5)`: 1 **Honest** (老实人) + the rest **Bluffers** (瞎掰王).
+   - Everyone else is a **Guesser** (猜词人) — at least 1.
+   - Honest rotates each round; speakers are drawn from players with the fewest speaking turns so everyone gets to guess.
+3. **Visibility:**
+   - Everyone sees the word + pronunciation and the speaking order.
+   - Honest: full explanation, hold-to-reveal for a **10s total budget**, then locked (stops verbatim reading).
+   - Bluffers in `HALF` mode: the first-half text. In `HINTS` mode: 3 hints (1 true + 2 random decoys, shuffled; combos may differ per bluffer). Bluffers do not know which hint is true.
+   - Guessers: word only. No one sees others' roles until reveal.
+4. **Flow:** Reveal cards → speakers explain offline in app-generated random order (host can swap the card via 换一题; roles stay) → host opens voting → each Guesser votes for one speaker as the Honest → reveal roles, full explanation and votes → scores → next round.
+5. **Scoring:**
+   - Guesser votes for the Honest: Guesser +1, Honest +1 (per correct vote).
+   - Each vote a Bluffer receives: that Bluffer +1. Bluffer with most votes is crowned the round's 瞎掰王.
+   - Final leaderboard after the last round.
+
 ## 5. UI/UX Requirements (Arc/Vaporwave Style)
 
 - **Background:** Deep dark gradient `linear-gradient(180deg, #0f172a 0%, #020617 100%)`.

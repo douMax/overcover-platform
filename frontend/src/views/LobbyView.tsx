@@ -6,6 +6,7 @@ import { DesertButton } from "../components/DesertButton";
 import { PlayerCard } from "../components/PlayerCard";
 import { GameTypeEnum } from "@shared/types/enums";
 import { RoomConfig } from "@shared/types/room";
+import { BluffMode } from "@shared/types/game-state";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "";
 
@@ -45,6 +46,8 @@ export function LobbyView() {
   const [designatedWolfIds, setDesignatedWolfIds] = useState<string[]>([]);
   const [useDesignatedWolves, setUseDesignatedWolves] = useState(false);
   const [spyWordMode, setSpyWordMode] = useState<'same' | 'blank'>('same');
+  const [bluffMode, setBluffMode] = useState<BluffMode>('HALF');
+  const [bluffRounds, setBluffRounds] = useState<number | null>(null); // null = one per player
 
   // Word categories and pair preview
   const [categories, setCategories] = useState<WordCategory[]>([]);
@@ -180,12 +183,22 @@ export function LobbyView() {
 
   const effectiveNumUndercovers = Math.min(numUndercovers, maxBadGuys);
   const effectiveNumWolves = Math.min(numWolves, maxBadGuys);
+  const effectiveBluffRounds = bluffRounds ?? Math.max(1, totalPlayingCount);
 
   const handleStartGame = () => {
     if (!room || !room.gameType) return;
 
     if (room.gameType === GameTypeEnum.COLOUR_HUNT) {
       startGame(room.gameType, { hostIsPlaying: true });
+      return;
+    }
+
+    if (room.gameType === GameTypeEnum.BLUFF_KING) {
+      startGame(room.gameType, {
+        hostIsPlaying,
+        bluffMode,
+        bluffRounds: effectiveBluffRounds,
+      });
       return;
     }
 
@@ -235,7 +248,8 @@ export function LobbyView() {
 
   const isUndercover = room.gameType === GameTypeEnum.UNDERCOVER;
   const isColourHunt = room.gameType === GameTypeEnum.COLOUR_HUNT;
-  const minPlayers = isColourHunt ? 2 : 3;
+  const isBluffKing = room.gameType === GameTypeEnum.BLUFF_KING;
+  const minPlayers = isColourHunt ? 2 : isBluffKing ? 4 : 3;
   const canStart = room.gameType && totalPlayingCount >= minPlayers && allPlayersReady;
 
   return (
@@ -256,6 +270,8 @@ export function LobbyView() {
                       ? "任务狼人杀"
                       : room.gameType === GameTypeEnum.COLOUR_HUNT
                       ? "野餐 Colour Hunt"
+                      : room.gameType === GameTypeEnum.BLUFF_KING
+                      ? "谁是瞎掰王"
                       : room.gameType
                   }`
                 : "等待游戏开始"}
@@ -474,6 +490,86 @@ export function LobbyView() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Game Config (host only, Bluff King game) */}
+        {isHost && isBluffKing && (
+          <div className="glass rounded-lg p-6 mb-6">
+            <h3 className="text-xl font-bold font-display text-on-surface mb-4">游戏设置</h3>
+
+            {/* Host plays toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-on-surface-variant">房主参与游戏</span>
+              <button
+                onClick={() => setHostIsPlaying(!hostIsPlaying)}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  hostIsPlaying ? "bg-primary shadow-neon-pink" : "bg-surface-container-high"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                    hostIsPlaying ? "translate-x-6" : ""
+                  }`}
+                />
+              </button>
+            </div>
+            {!hostIsPlaying && (
+              <p className="text-xs text-outline -mt-2 mb-4">房主作为主持人，可以看到完整题卡和所有人的身份</p>
+            )}
+
+            {/* Bluffer info mode */}
+            <div className="mb-4">
+              <span className="text-on-surface-variant block mb-2">瞎掰王能看到</span>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { mode: 'HALF', title: "前半段解释", desc: "看得到开头，后半段靠编" },
+                  { mode: 'HINTS', title: "三选一提示", desc: "3 个提示，只有 1 个是真的" },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.mode}
+                    onClick={() => setBluffMode(opt.mode)}
+                    className={`rounded-lg p-3 text-left transition-all border ${
+                      bluffMode === opt.mode
+                        ? "border-primary bg-primary/15 shadow-neon-pink"
+                        : "border-outline-variant bg-surface-container-high"
+                    }`}
+                  >
+                    <div className="text-on-surface font-bold text-sm">{opt.title}</div>
+                    <div className="text-on-surface-variant text-xs mt-1">{opt.desc}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-outline mt-2">每轮结束后可以切换</p>
+            </div>
+
+            {/* Rounds */}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-on-surface-variant">游戏轮数</span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setBluffRounds(Math.max(1, effectiveBluffRounds - 1))}
+                  disabled={effectiveBluffRounds <= 1}
+                  className="w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-bold disabled:opacity-40"
+                >
+                  -
+                </button>
+                <span className="text-on-surface font-bold w-6 text-center">
+                  {effectiveBluffRounds}
+                </span>
+                <button
+                  onClick={() => setBluffRounds(Math.min(30, effectiveBluffRounds + 1))}
+                  disabled={effectiveBluffRounds >= 30}
+                  className="w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-bold disabled:opacity-40"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-outline">
+              当前 {totalPlayingCount} 人：{Math.max(0, Math.min(totalPlayingCount - 1, 5))} 人发言（1 老实人 + 瞎掰王），
+              其余猜词。轮数 = 人数时每人都会当一次老实人
+            </p>
           </div>
         )}
 

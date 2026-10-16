@@ -13,4 +13,5 @@ export enum GameTypeEnum {
   UNDERCOVER = "UNDERCOVER",
   TASKWOLF = "TASKWOLF",
   COLOUR_HUNT = "COLOUR_HUNT",
+  BLUFF_KING = "BLUFF_KING",
 }
