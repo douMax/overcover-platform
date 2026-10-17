@@ -143,17 +143,30 @@ interface ContentService {
 | **P1** | 效果分 + 加权选题；题包；后台统计页；记录卧底大厅里的「换一组」 | 题目质量开始自动变好 |
 | **P2** | 后台编辑界面；关系图谱；AI 生成草稿 + 审核流程 | 题库持续扩充，非技术同事可参与 |
 
-## 9. P0 上线步骤（合并前必读）
+## 9. 功能开关与上线
 
-1. 创建 Volume（只需一次）：`fly volumes create overcover_data --region syd --size 1`
-2. （可选）设置统计接口的 token：`fly secrets set ADMIN_TOKEN=<随机字符串>`
-3. 合并分支并部署。`fly.toml` 会把 Volume 挂载到 `/data`，数据库文件为 `/data/overcover.db`。
+整个题库服务由一个写死在代码里的开关控制：`backend/src/config/features.ts` 里的 `contentService`。
 
-本地开发不需要 Volume，数据库默认写在 `backend/data/overcover.db`（已加入 `.gitignore`）。
+| 环境 | 判断方式 | 默认 |
+|---|---|---|
+| development（本地开发服务器） | `NODE_ENV` 不是 `production` | **开** |
+| production（Fly 线上） | `NODE_ENV=production`（Dockerfile 和 fly.toml 都已设置） | **关** |
+
+**开关关闭时**：不加载 SQLite、不读写任何文件、不记录数据；揭晓时不显示 👍/👎；统计接口返回 404；不需要 Volume。游戏和题库与 P0 之前完全一样（静态题库文件）。
+
+**本地测试**：直接 `npm run dev:backend`，开关默认打开，数据库写在 `backend/data/overcover.db`（已加入 `.gitignore`）。
+
+**在线上打开时**（以后需要时）：
+
+1. 把 `features.ts` 里 `contentService` 的 `production` 改为 `true`。
+2. 创建 Volume（只需一次）：`fly volumes create overcover_data --region syd --size 1`
+3. 在 `fly.toml` 里取消注释 `DATA_DIR` 和 `[mounts]`。
+4. （可选）设置统计接口的 token：`fly secrets set ADMIN_TOKEN=<随机字符串>`
+5. 部署。数据库文件为 `/data/overcover.db`。
 
 其他说明：
 
-- Docker 镜像从 Node 20 升级到 Node 22（`node:sqlite` 需要 Node 22）。启动日志里会有一行 SQLite 的 `ExperimentalWarning`，属正常现象。
+- Docker 镜像从 Node 20 升级到 Node 22（`node:sqlite` 需要 Node 22；Node 20 已于 2026 年 4 月停止维护）。开关打开时启动日志里会有一行 SQLite 的 `ExperimentalWarning`，属正常现象。
 - 挂载 Volume 后，app 只能运行 1 台机器（Volume 只能挂在一台机器上），正好满足房间状态在内存里的限制。
 - 数据库打不开时（例如 Volume 没挂上），服务会打日志并照常运行游戏，只是不记录数据。
 - 查看统计：`curl -H "Authorization: Bearer $ADMIN_TOKEN" https://<app>.fly.dev/api/v1/admin/stats?game=BLUFF_KING`

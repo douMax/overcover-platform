@@ -1,13 +1,14 @@
 import { mkdirSync } from "fs";
 import { dirname, join } from "path";
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
 import { FeedbackReason } from "../../../shared/events";
+import { isFeatureEnabled } from "../config/features";
 
 /**
  * Card bank usage data (rounds played, player feedback) backed by SQLite.
  *
- * The game must never depend on this: if the database can't be opened or a
- * write fails, every method logs and returns a no-op result.
+ * The game must never depend on this: if the feature toggle is off, the
+ * database can't be opened, or a write fails, every method is a no-op.
  */
 
 const SCHEMA_VERSION = 1;
@@ -122,6 +123,8 @@ export class ContentStore {
   static open(path: string): ContentStore {
     try {
       if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
+      // Loaded lazily so a disabled store never pulls in node:sqlite
+      const { DatabaseSync } = require("node:sqlite") as typeof import("node:sqlite");
       const db = new DatabaseSync(path);
       db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 2000;");
       db.exec(SCHEMA);
@@ -132,6 +135,11 @@ export class ContentStore {
       console.error("Content store unavailable, continuing without it:", e);
       return new ContentStore(null);
     }
+  }
+
+  /** A store that does nothing (feature toggle off) */
+  static disabled(): ContentStore {
+    return new ContentStore(null);
   }
 
   get isAvailable(): boolean {
@@ -273,8 +281,15 @@ export class ContentStore {
 
 let store: ContentStore | null = null;
 
-/** Process-wide store; DATA_DIR overrides the location (Fly volume mounts at /data) */
+/**
+ * Process-wide store; DATA_DIR overrides the location (Fly volume mounts at /data).
+ * Gated by the `contentService` feature toggle in config/features.ts.
+ */
 export function getContentStore(): ContentStore {
+  if (!store && !isFeatureEnabled("contentService")) {
+    console.log("Content service disabled by feature toggle; using static card files only");
+    store = ContentStore.disabled();
+  }
   if (!store) {
     const dataDir = process.env.DATA_DIR || join(__dirname, "../../data");
     store = ContentStore.open(process.env.CONTENT_DB === ":memory:" ? ":memory:" : join(dataDir, "overcover.db"));

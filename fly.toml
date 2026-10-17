@@ -10,13 +10,16 @@ primary_region = 'syd'
 [env]
   NODE_ENV = 'production'
   PORT = '8080'
-  DATA_DIR = '/data'
+  # DATA_DIR = '/data'   # content store, see [mounts] below
 
-# Content store (SQLite). Create once: fly volumes create overcover_data --region syd --size 1
+# Content store (SQLite) — only needed once the `contentService` toggle in
+# backend/src/config/features.ts is on for production. To enable:
+#   1. fly volumes create overcover_data --region syd --size 1
+#   2. uncomment DATA_DIR above and the [mounts] block below, then deploy
 # A volume attaches to a single machine, which also keeps the app at exactly one machine.
-[mounts]
-  source = 'overcover_data'
-  destination = '/data'
+# [mounts]
+#   source = 'overcover_data'
+#   destination = '/data'
 
 [http_service]
   internal_port = 8080

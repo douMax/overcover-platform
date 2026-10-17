@@ -8,6 +8,7 @@ import { getTaskCategories } from "./utils/task-loader";
 import { loadBluffCards } from "./utils/bluff-card-loader";
 import { getContentStore, ContentGame } from "./content/content-store";
 import { timingSafeEqual } from "crypto";
+import { isFeatureEnabled } from "./config/features";
 // State persistence is available in ./utils/state-persistence.ts
 // Currently disabled — will be replaced with Redis for production.
 // import { saveState, loadState } from "./utils/state-persistence";
@@ -71,8 +72,9 @@ app.get("/api/word-categories", (req, res) => {
   res.json(categories);
 });
 
-// Card bank stats — disabled unless ADMIN_TOKEN is set; send it as "Authorization: Bearer <token>"
+// Card bank stats — needs the contentService toggle and ADMIN_TOKEN; send "Authorization: Bearer <token>"
 app.get("/api/v1/admin/stats", (req, res) => {
+  if (!isFeatureEnabled("contentService")) return res.sendStatus(404);
   const token = process.env.ADMIN_TOKEN;
   const given = Buffer.from((req.header("authorization") || "").replace(/^Bearer\s+/i, ""));
   const expected = Buffer.from(token || "");

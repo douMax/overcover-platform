@@ -58,6 +58,7 @@ cd frontend && npm install
 - **DTOs** in `shared/dto/` separate frontend-visible data from backend internals (e.g., `socketId` never sent to clients)
 - **All documentation** goes in `docs/` — game rules in `docs/PRD_PROMPT.md`, word pairs in `docs/word-list.md`, Bluff King cards in `docs/bluff-list.md` (parsed at runtime — keep its field format)
 - **Styling:** Dark gradients (`#0F172A` to `#020617`), cream cards (`#FFFDF0`), neon glow via Tailwind shadow utilities, Framer Motion for animations
+- **Feature toggles:** hard-coded per environment in `backend/src/config/features.ts` (`NODE_ENV=production` vs. everything else). The card bank data service (`contentService`, see `docs/content-service-design.md`) is on in development and off in production.
 - **Mobile-first:** UI optimized for mobile browsers. Hold-to-reveal cards use 1.5s long-press with blur filter. Haptic feedback via `navigator.vibrate()`.
 
 ## Room Lifecycle
