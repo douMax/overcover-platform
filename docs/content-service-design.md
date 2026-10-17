@@ -151,6 +151,13 @@ interface ContentService {
 
 本地开发不需要 Volume，数据库默认写在 `backend/data/overcover.db`（已加入 `.gitignore`）。
 
+其他说明：
+
+- Docker 镜像从 Node 20 升级到 Node 22（`node:sqlite` 需要 Node 22）。启动日志里会有一行 SQLite 的 `ExperimentalWarning`，属正常现象。
+- 挂载 Volume 后，app 只能运行 1 台机器（Volume 只能挂在一台机器上），正好满足房间状态在内存里的限制。
+- 数据库打不开时（例如 Volume 没挂上），服务会打日志并照常运行游戏，只是不记录数据。
+- 查看统计：`curl -H "Authorization: Bearer $ADMIN_TOKEN" https://<app>.fly.dev/api/v1/admin/stats?game=BLUFF_KING`
+
 ## 10. 待决定
 
 - 谁来维护题库：只有一个人时用「git 文件为准」最简单；多人编辑时 P1 就要做后台编辑，并考虑换成托管数据库。

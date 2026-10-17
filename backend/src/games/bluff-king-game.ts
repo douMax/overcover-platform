@@ -10,6 +10,8 @@ import {
   BluffRole,
 } from "../../../shared/types/game-state";
 import { loadBluffCards } from "../utils/bluff-card-loader";
+import { getContentStore } from "../content/content-store";
+import { FeedbackTarget } from "./base-game";
 
 const MAX_SPEAKERS = 5;
 export const BLUFF_KING_MIN_PLAYERS = 4;
@@ -105,18 +107,21 @@ export class BluffKingGame extends BaseGame {
 
       case "SKIP_CARD": {
         if (state.phase !== "PLAYING") return;
+        getContentStore().markRoundSkipped(state.roundRecordId);
         state.usedWords.push(state.card.word);
         state.card = this.drawCard(state.usedWords);
         state.bluffHints = this.dealHints(state);
         state.honestLocked = false;
         state.votes = {};
         state.votedPlayerIds = [];
+        state.roundRecordId = this.recordRoundStart(state);
         break;
       }
 
       case "REVEAL_VOTES": {
         if (state.phase !== "PLAYING") return;
-        this.scoreRound(state);
+        const outcome = this.scoreRound(state);
+        getContentStore().finishRound(state.roundRecordId, outcome);
         state.phase = "REVEAL";
         break;
       }
@@ -214,6 +219,7 @@ export class BluffKingGame extends BaseGame {
       dto.roundGains = state.roundGains;
       dto.crownedIds = state.crownedIds;
     }
+    dto.canRate = this.getFeedbackTarget() !== null;
 
     return dto;
   }
@@ -221,6 +227,25 @@ export class BluffKingGame extends BaseGame {
   /** Roles live in the game state DTO; never expose gameData/role on players */
   override sanitizePlayerData(player: Player, viewerId?: string): PlayerDTO {
     return { ...super.sanitizePlayerData(player, viewerId), role: undefined, gameData: undefined };
+  }
+
+  override getFeedbackTarget(): FeedbackTarget | null {
+    const state = this.state();
+    if (!state || state.phase !== "REVEAL" || !state.roundRecordId) return null;
+    return { roundId: state.roundRecordId, cardId: state.card.id, game: "BLUFF_KING" };
+  }
+
+  private recordRoundStart(state: BluffKingGameState): number | null {
+    return getContentStore().startRound({
+      roomId: this.room.id,
+      game: "BLUFF_KING",
+      cardId: state.card.id,
+      roundNo: state.round,
+      mode: state.mode,
+      playerCount: Object.keys(state.roles).length,
+      speakerCount: state.speakerOrder.length,
+      guesserCount: Object.values(state.roles).filter(r => r === "GUESSER").length,
+    });
   }
 
   private state(): BluffKingGameState | null {
@@ -271,6 +296,7 @@ export class BluffKingGame extends BaseGame {
     state.votedPlayerIds = [];
     state.roundGains = {};
     state.crownedIds = [];
+    state.roundRecordId = this.recordRoundStart(state);
   }
 
   /** Each bluffer gets the true hint plus 2 random decoys, shuffled */
@@ -295,7 +321,7 @@ export class BluffKingGame extends BaseGame {
    * Correct guess: guesser +1 and honest +1.
    * Each vote a bluffer fools: that bluffer +1.
    */
-  private scoreRound(state: BluffKingGameState): void {
+  private scoreRound(state: BluffKingGameState): Record<string, unknown> {
     const gains: Record<string, number> = {};
     const add = (id: string) => {
       gains[id] = (gains[id] || 0) + 1;
@@ -318,5 +344,14 @@ export class BluffKingGame extends BaseGame {
       ? Object.keys(bluffVotes).filter(id => bluffVotes[id] === maxVotes)
       : [];
     state.roundGains = gains;
+
+    const totalVotes = Object.keys(state.votes).length;
+    const bluffVoteTotal = Object.values(bluffVotes).reduce((a, b) => a + b, 0);
+    return {
+      totalVotes,
+      correctVotes: totalVotes - bluffVoteTotal,
+      bluffVotes: Object.values(bluffVotes).sort((a, b) => b - a),
+      honestLocked: state.honestLocked,
+    };
   }
 }

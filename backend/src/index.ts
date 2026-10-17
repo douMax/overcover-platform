@@ -5,6 +5,9 @@ import { setupSocketIO } from "./socket";
 import { RoomManager } from "./room-manager";
 import { loadWordPairs, getWordCategories } from "./utils/word-loader";
 import { getTaskCategories } from "./utils/task-loader";
+import { loadBluffCards } from "./utils/bluff-card-loader";
+import { getContentStore, ContentGame } from "./content/content-store";
+import { timingSafeEqual } from "crypto";
 // State persistence is available in ./utils/state-persistence.ts
 // Currently disabled — will be replaced with Redis for production.
 // import { saveState, loadState } from "./utils/state-persistence";
@@ -12,6 +15,15 @@ import { getTaskCategories } from "./utils/task-loader";
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5050;
+
+// Mirror the file-based card banks into the content store (no-op if it's unavailable)
+const contentStore = getContentStore();
+contentStore.syncCards("UNDERCOVER", loadWordPairs().map(p => ({
+  id: p.id, title: `${p.A} / ${p.B}`, category: p.category, content: { A: p.A, B: p.B },
+})));
+contentStore.syncCards("BLUFF_KING", loadBluffCards().map(c => ({
+  id: c.id, title: c.word, category: c.category, content: c,
+})));
 
 // Initialize room manager
 const roomManager = new RoomManager();
@@ -57,6 +69,19 @@ app.get("/api/word-pairs", (req, res) => {
 app.get("/api/word-categories", (req, res) => {
   const categories = getWordCategories();
   res.json(categories);
+});
+
+// Card bank stats — disabled unless ADMIN_TOKEN is set; send it as "Authorization: Bearer <token>"
+app.get("/api/v1/admin/stats", (req, res) => {
+  const token = process.env.ADMIN_TOKEN;
+  const given = Buffer.from((req.header("authorization") || "").replace(/^Bearer\s+/i, ""));
+  const expected = Buffer.from(token || "");
+  const authorized = !!token && given.length === expected.length && timingSafeEqual(given, expected);
+  if (!authorized) return res.sendStatus(token ? 401 : 404);
+
+  const game = req.query.game === "UNDERCOVER" || req.query.game === "BLUFF_KING"
+    ? (req.query.game as ContentGame) : undefined;
+  res.json({ available: contentStore.isAvailable, cards: contentStore.getStats(game) });
 });
 
 app.get("/api/task-categories", (req, res) => {

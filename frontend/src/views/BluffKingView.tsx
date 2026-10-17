@@ -4,6 +4,7 @@ import { useGameState } from "../hooks/useGameState";
 import { useSocket } from "../hooks/useSocket";
 import { DesertButton } from "../components/DesertButton";
 import { Avatar } from "../components/Avatar";
+import { FeedbackBar } from "../components/FeedbackBar";
 import { BluffKingGameStateDTO, BluffMode, BluffRole } from "@shared/types/game-state";
 import { PlayerDTO } from "@shared/types/player";
 
@@ -366,6 +367,11 @@ export function BluffKingView({ gameState: gs }: { gameState: BluffKingGameState
             {gs.crownedIds && gs.crownedIds.length > 0 && (
               <div className="mt-3 text-center text-lg font-bold font-display text-warning">
                 👑 本轮瞎掰王：{gs.crownedIds.map(getName).join("、")}
+              </div>
+            )}
+            {gs.canRate && (
+              <div className="mt-4">
+                <FeedbackBar key={`${gs.round}-${gs.word}`} />
               </div>
             )}
           </div>

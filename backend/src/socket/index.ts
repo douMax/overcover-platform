@@ -59,6 +59,11 @@ export function setupSocketIO(
       }
     });
 
+    socket.on(GameEvents.SUBMIT_FEEDBACK, async (payload, ack?: (ok: boolean) => void) => {
+      const ok = await handlers.handleSubmitFeedback(socket, payload);
+      if (typeof ack === "function") ack(ok);
+    });
+
     socket.on(GameEvents.KICK_PLAYER, async payload => {
       await handlers.handleKickPlayer(socket, payload, io);
     });

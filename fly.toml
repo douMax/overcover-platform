@@ -10,6 +10,13 @@ primary_region = 'syd'
 [env]
   NODE_ENV = 'production'
   PORT = '8080'
+  DATA_DIR = '/data'
+
+# Content store (SQLite). Create once: fly volumes create overcover_data --region syd --size 1
+# A volume attaches to a single machine, which also keeps the app at exactly one machine.
+[mounts]
+  source = 'overcover_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080

@@ -4,6 +4,8 @@ import { Player, PlayerDTO, PlayerRole } from "../../../shared/types/player";
 import { RoomStatus } from "../../../shared/types/enums";
 import { loadWordPairs, WordPair } from "../utils/word-loader";
 import { RoomConfig } from "../../../shared/types/room";
+import { getContentStore } from "../content/content-store";
+import { FeedbackTarget } from "./base-game";
 
 export class UndercoverGame extends BaseGame {
   private wordPairs: WordPair[] = [];
@@ -20,8 +22,7 @@ export class UndercoverGame extends BaseGame {
       if (filtered.length > 0) availablePairs = filtered;
     }
 
-    const wordPair =
-      config.customWordPairs?.[0] ||
+    const wordPair = this.resolveCustomPair(config.customWordPairs?.[0]) ||
       availablePairs[Math.floor(Math.random() * availablePairs.length)];
     const numUndercovers = config.numUndercovers || 1;
     const spyWordMode = config.spyWordMode || 'same';
@@ -67,9 +68,18 @@ export class UndercoverGame extends BaseGame {
       };
     });
 
+    const roundRecordId = getContentStore().startRound({
+      roomId: this.room.id,
+      game: "UNDERCOVER",
+      cardId: wordPair.id ?? null,
+      mode: spyWordMode,
+      playerCount: playingPlayers.length,
+    });
+
     this.gameState = {
       type: "UNDERCOVER",
-      wordPairs: [wordPair],
+      wordPairs: [{ A: wordPair.A, B: wordPair.B, id: wordPair.id }],
+      roundRecordId,
       assignedWords,
       assignedRoles,
       phase: "PLAYING",
@@ -139,10 +149,17 @@ export class UndercoverGame extends BaseGame {
       }
 
       case "END_GAME": {
+        if (state.phase === "RESULT") return;
         if (data?.winner) {
           state.winner = data.winner;
         }
         state.phase = "RESULT";
+        getContentStore().finishRound(state.roundRecordId, {
+          winner: state.winner ?? null,
+          rounds: state.round,
+          eliminated: state.eliminatedPlayerIds.length,
+          undercovers: Object.values(state.assignedRoles).filter(r => r === PlayerRole.UNDERCOVER).length,
+        });
         break;
       }
     }
@@ -156,6 +173,24 @@ export class UndercoverGame extends BaseGame {
       player.gameData = undefined;
       player.isAlive = true;
     });
+  }
+
+  override getFeedbackTarget(): FeedbackTarget | null {
+    if (!this.gameState || this.gameState.type !== "UNDERCOVER") return null;
+    const state = this.gameState as UndercoverGameState;
+    const cardId = state.wordPairs[0]?.id;
+    if (state.phase !== "RESULT" || !state.roundRecordId || !cardId) return null;
+    return { roundId: state.roundRecordId, cardId, game: "UNDERCOVER" };
+  }
+
+  /** Keep a host-supplied pair, but only trust its card id if it matches the bank */
+  private resolveCustomPair(
+    custom: { A: string; B: string; id?: string } | undefined
+  ): { A: string; B: string; id?: string } | undefined {
+    if (!custom) return undefined;
+    const banked = this.wordPairs.find(p => p.id === custom.id);
+    const matches = banked && banked.A === custom.A && banked.B === custom.B;
+    return { A: custom.A, B: custom.B, id: matches ? custom.id : undefined };
   }
 
   /**
@@ -263,6 +298,7 @@ export class UndercoverGame extends BaseGame {
       dto.allRoles = { ...state.assignedRoles };
       dto.allWords = { ...state.assignedWords };
     }
+    dto.canRate = this.getFeedbackTarget() !== null;
 
     return dto;
   }

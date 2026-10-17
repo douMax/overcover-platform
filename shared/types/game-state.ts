@@ -2,7 +2,8 @@ import { PlayerRole } from './player';
 
 export interface UndercoverGameState {
   type: 'UNDERCOVER';
-  wordPairs: Array<{ A: string; B: string }>;
+  wordPairs: Array<{ A: string; B: string; id?: string }>;
+  roundRecordId?: number | null;  // content store row for this game
   assignedWords: Record<string, string>;
   assignedRoles: Record<string, PlayerRole>;
   phase: 'PLAYING' | 'REVEAL' | 'RESULT';
@@ -27,6 +28,7 @@ export interface UndercoverGameStateDTO {
   winner?: 'CIVILIAN' | 'UNDERCOVER';
   allRoles?: Record<string, PlayerRole>;
   allWords?: Record<string, string>;
+  canRate?: boolean;  // RESULT phase, word pair came from the card bank
 }
 
 export interface TaskWolfGameState {
@@ -76,6 +78,7 @@ export type BluffMode = 'HALF' | 'HINTS';
 export type BluffRole = 'HONEST' | 'BLUFFER' | 'GUESSER';
 
 export interface BluffCard {
+  id: string;            // stable id, e.g. "bk-001"
   word: string;
   reading?: string;      // pinyin or original-language name
   category: string;
@@ -103,6 +106,7 @@ export interface BluffKingGameState {
   scores: Record<string, number>;
   roundGains: Record<string, number>;
   crownedIds: string[];                  // bluffers with most votes this round
+  roundRecordId?: number | null;         // content store row for this round
   speakCounts: Record<string, number>;
   honestCounts: Record<string, number>;
 }
@@ -135,6 +139,7 @@ export interface BluffKingGameStateDTO {
   revealedVotes?: Record<string, string>;
   roundGains?: Record<string, number>;
   crownedIds?: string[];
+  canRate?: boolean;        // REVEAL phase: players can rate this card
 }
 
 export type GameState = UndercoverGameState | TaskWolfGameState | ColourHuntGameState | BluffKingGameState | null;

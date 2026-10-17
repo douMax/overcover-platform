@@ -7,6 +7,7 @@ import { Avatar } from "../components/Avatar";
 import { PlayerRole } from "@shared/types/player";
 import { UndercoverGameStateDTO, TaskWolfGameStateDTO, ColourHuntGameStateDTO } from "@shared/types/game-state";
 import { BluffKingView } from "./BluffKingView";
+import { FeedbackBar } from "../components/FeedbackBar";
 
 // Shared types for both game modes
 interface GameInfo {
@@ -298,6 +299,11 @@ export function GameplayView() {
             {gi.winner && (
               <div className={`text-2xl font-bold font-display mt-4 ${winInfo.color}`}>
                 {winInfo.text}
+              </div>
+            )}
+            {gameState.type === 'UNDERCOVER' && gameState.canRate && (
+              <div className="mt-4 text-left">
+                <FeedbackBar />
               </div>
             )}
           </div>

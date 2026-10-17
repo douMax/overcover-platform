@@ -6,3 +6,5 @@ dist
 .env.development.local
 .env.test.local
 .env.production.local
+# Local content store (SQLite)
+backend/data/

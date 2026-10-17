@@ -1,4 +1,4 @@
-FROM node:20-slim AS build
+FROM node:22-slim AS build
 
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
@@ -30,7 +30,7 @@ RUN cp -r /app/shared/dist/* /app/shared/
 RUN pnpm --filter overcover-backend deploy --prod --legacy /app/backend-prod
 
 # Production image
-FROM node:20-slim
+FROM node:22-slim
 
 WORKDIR /app
 

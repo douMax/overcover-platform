@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 export interface WordPair {
+  id: string; // stable id from the 序号 column, e.g. "uc-001"
   A: string;
   B: string;
   category: string;
@@ -30,11 +31,12 @@ export function loadWordPairs(): WordPair[] {
 
     const parts = trimmed.split(",");
     if (parts.length >= 4) {
+      const num = parseInt(parts[0], 10);
       const category = parts[1].trim();
       const wordA = parts[2].trim();
       const wordB = parts[3].trim();
-      if (category && wordA && wordB) {
-        wordPairs.push({ A: wordA, B: wordB, category });
+      if (Number.isInteger(num) && category && wordA && wordB) {
+        wordPairs.push({ id: `uc-${String(num).padStart(3, "0")}`, A: wordA, B: wordB, category });
       }
     }
   }

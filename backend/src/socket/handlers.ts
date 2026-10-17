@@ -10,7 +10,9 @@ import {
   GameActionPayload,
   UpdatePlayerPayload,
   VoteWarningPayload,
+  SubmitFeedbackPayload,
 } from "../../../shared/events";
+import { getContentStore } from "../content/content-store";
 import { Room } from "../../../shared/types/room";
 import { GameState } from "../../../shared/types/game-state";
 import { Player } from "../../../shared/types/player";
@@ -217,6 +219,24 @@ export class SocketHandlers {
 
     // Broadcast updated state to all players
     await this.broadcastRoomStateViaIO(io, payload.roomId);
+  }
+
+  /** Store a player's 👍/👎 for the card currently revealed in their room */
+  async handleSubmitFeedback(socket: Socket, payload: SubmitFeedbackPayload): Promise<boolean> {
+    if (payload?.rating !== 1 && payload?.rating !== -1) return false;
+    const room = await this.roomManager.getRoom(payload.roomId);
+    const player = room?.players.find(p => p.socketId === socket.id);
+    const target = this.activeGames.get(payload.roomId)?.getFeedbackTarget();
+    if (!room || !player || !target) return false;
+
+    getContentStore().recordFeedback({
+      ...target,
+      roomId: room.id,
+      playerId: player.id,
+      rating: payload.rating,
+      reasons: Array.isArray(payload.reasons) ? payload.reasons : [],
+    });
+    return true;
   }
 
   async handleUpdatePlayer(

@@ -3,7 +3,7 @@ import { RoomStatus, GameTypeEnum } from "./enums";
 import { BluffMode } from "./game-state";
 
 export interface RoomConfig {
-  customWordPairs?: Array<{ A: string; B: string }>;
+  customWordPairs?: Array<{ A: string; B: string; id?: string }>;
   customTasks?: string[];
   numUndercovers?: number;
   hostIsPlaying?: boolean;

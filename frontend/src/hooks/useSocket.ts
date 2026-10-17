@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import { GameEvents, VoteWarningPayload } from "@shared/events";
+import { GameEvents, VoteWarningPayload, FeedbackReason } from "@shared/events";
 import { Room, RoomConfig } from "@shared/types/room";
 import { GameTypeEnum } from "@shared/types/enums";
 
@@ -214,6 +214,17 @@ export function useSocket() {
     });
   };
 
+  /** Resolves true once the server stored the rating */
+  const submitFeedback = (rating: 1 | -1, reasons: FeedbackReason[] = []): Promise<boolean> =>
+    new Promise(resolve => {
+      if (!socket || !room) return resolve(false);
+      socket.timeout(5000).emit(
+        GameEvents.SUBMIT_FEEDBACK,
+        { roomId: room.id, rating, reasons },
+        (err: Error | null, ok: boolean) => resolve(!err && ok)
+      );
+    });
+
   const clearVoteWarning = () => setVoteWarning(null);
 
   return {
@@ -237,5 +248,6 @@ export function useSocket() {
     updatePlayer,
     kickPlayer,
     clearVoteWarning,
+    submitFeedback,
   };
 }

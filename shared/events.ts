@@ -12,6 +12,7 @@ export const GameEvents = {
   UPDATE_PLAYER: "update_player",
   KICK_PLAYER: "kick_player",
   PLAYER_KICKED: "player_kicked",
+  SUBMIT_FEEDBACK: "submit_feedback",
 } as const;
 
 export interface JoinRoomPayload {
@@ -61,6 +62,15 @@ export interface UpdatePlayerPayload {
 export interface KickPlayerPayload {
   roomId: string;
   targetPlayerId: string;
+}
+
+export type FeedbackReason = "too_hard" | "too_easy" | "never_heard" | "funny" | "boring";
+
+/** Player's rating of the card just revealed; the server resolves which card/round it was */
+export interface SubmitFeedbackPayload {
+  roomId: string;
+  rating: 1 | -1;
+  reasons?: FeedbackReason[];
 }
 
 export interface VoteWarningPayload {

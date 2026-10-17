@@ -13,7 +13,7 @@ const FIELD_KEYS: Record<string, keyof BluffCard> = {
  *
  * Expected format:
  *   ## 🏮 Category
- *   ### 01 Word（reading）
+ *   ### 01 Word（reading）     ← the number is the stable id (bk-001); never reuse it
  *   - **完整解释**：...
  *   - **前半段**：...
  *   - **真提示**：...
@@ -39,12 +39,13 @@ export function loadBluffCards(): BluffCard[] {
   for (const rawLine of content.split("\n")) {
     const line = rawLine.trim();
 
-    const cardMatch = line.match(/^###\s+\d+\s+(.+?)(?:（(.+)）)?$/);
+    const cardMatch = line.match(/^###\s+(\d+)\s+(.+?)(?:（(.+)）)?$/);
     if (cardMatch) {
       flush();
       current = {
-        word: cardMatch[1].trim(),
-        reading: cardMatch[2]?.trim(),
+        id: `bk-${cardMatch[1].padStart(3, "0")}`,
+        word: cardMatch[2].trim(),
+        reading: cardMatch[3]?.trim(),
         category,
       };
       continue;
@@ -74,6 +75,7 @@ export function loadBluffCards(): BluffCard[] {
 
 function isCompleteCard(card: Partial<BluffCard>): card is BluffCard {
   return Boolean(
+    card.id &&
     card.word &&
     card.explanation &&
     card.firstHalf &&

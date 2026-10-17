@@ -2,6 +2,14 @@ import { Room } from '../../../shared/types/room';
 import { Player, PlayerDTO } from '../../../shared/types/player';
 import { GameState } from '../../../shared/types/game-state';
 import { sanitizePlayer } from '../utils/player-sanitizer';
+import { ContentGame } from '../content/content-store';
+
+/** The card/round a player's feedback applies to right now */
+export interface FeedbackTarget {
+  roundId: number;
+  cardId: string;
+  game: ContentGame;
+}
 
 /**
  * Abstract base class for all game engines
@@ -19,6 +27,11 @@ export abstract class BaseGame {
   abstract onStart(config: any): void;
   abstract onAction(action: string, data: any): void;
   abstract onEnd(): void;
+
+  /** Override in games backed by the card bank; null means nothing to rate now */
+  getFeedbackTarget(): FeedbackTarget | null {
+    return null;
+  }
 
   getGameState(): GameState {
     return this.gameState;
